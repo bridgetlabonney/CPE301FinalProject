@@ -14,7 +14,8 @@ ya need to build a dang swamp cooler for this code to be of any use!
 4. Hit "Upload" and watch it go!
 
 ## Release History
-> No code yet :( come back later
+- 1.0
+  *Changes - Added base code
 
 
 ## Info and Credits
