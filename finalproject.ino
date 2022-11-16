@@ -4,6 +4,15 @@
 
 //VARIABLES
 
+//serial port stuff
+ #define RDA 0x80
+ #define TBE 0x20  
+ volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
+ volatile unsigned char *myUCSR0B = (unsigned char *)0x00C1;
+ volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
+ volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
+ volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
+
 //currently at port PB7 (on-board LED) (YELLOW LED)
 volatile unsigned char* port_y = (unsigned char*) 0x25; 
 volatile unsigned char* ddr_y  = (unsigned char*) 0x24; 
@@ -53,6 +62,9 @@ void ERROR() {
 
 void stateReport() {
   //stop button -> turn fan motor off and go to DISABLED()
+  if() { //checked if button is pressed
+
+  }
   //humidity and temp control report on
   //respond to vent position.
 }
@@ -77,12 +89,42 @@ void DISABLED() {
   WaterMonitorEnable(false);
 }
 
+//serial monitor functions
+
+void U0init(unsigned long baud)
+{
+ unsigned long FCPU = 16000000;
+ unsigned int tbaud;
+ tbaud = (FCPU / 16 / baud - 1);
+ *myUCSR0A = 0x20;
+ *myUCSR0B = 0x18;
+ *myUCSR0C = 0x06;
+ *myUBRR0  = tbaud;
+}
+
+unsigned char getchar()
+{
+ return *myUDR0; 
+}
+
+unsigned char available()
+{
+  return (RDA & *myUCSR0A);
+}
+
+unsigned char printchar(unsigned char data) {
+while((*myUCSR0A & TBE) == 0) {};
+  *myUDR0 = data;
+}
+
 void setup() {
   // put your setup code here, to run once:
   *ddr_b |= 0x80;
   *ddr_r |= 0x80;
   *ddr_y |= 0x80;
   *ddr_g |= 0x80;
+  //set the baud rate
+  U0init(9600); 
 
 }
 
@@ -90,3 +132,4 @@ void loop() {
   // put your main code here, to run repeatedly:
 
 }
+
