@@ -13,7 +13,7 @@
  volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
  volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
 
-//currently at port PB7 (on-board LED) (YELLOW LED)
+//currently on pin 12 (YELLOW LED)
 volatile unsigned char* port_y = (unsigned char*) 0x25; 
 volatile unsigned char* ddr_y  = (unsigned char*) 0x24; 
 volatile unsigned char* pin_y  = (unsigned char*) 0x23; 
@@ -33,20 +33,20 @@ volatile unsigned char* port_g = (unsigned char*) 0x25;
 volatile unsigned char* ddr_g  = (unsigned char*) 0x24; 
 volatile unsigned char* pin_g  = (unsigned char*) 0x23; 
 
+bool WaterMonitorEnable = true;
+bool FanMotor = false;
 void ClockReport() {
 //This gets the current real time and reports it to the Serial monitor
+
 }
 
-void WaterMonitorEnable(bool x) {
-  if(x) {}; //enable water monitor
-  else //disable water monitor
-}
-
+//state functions
 void IDLE() {
   //timestamp
+  stateReport("IDLE");
   //turn on greenLED
   *port_g &= 0x87;
-  //if stop button is pressed, DISABLED()
+  
 }
 
 void ERROR() {
@@ -60,18 +60,30 @@ void ERROR() {
   *port_b |= 0x11;
 }
 
-void stateReport() {
-  //stop button -> turn fan motor off and go to DISABLED()
-  if() { //checked if button is pressed
-
+void FanMotor() {
+  
+  if(on) {
+    //turn on fan motor
   }
-  //humidity and temp control report on
-  //respond to vent position.
+  else { //turn it off 
+  }
+}
+
+void stateReport(char x) {
+  //get a timestamp and print the state
+  printChar(x);
+  ClockReport();
+  //humidity/temp monitoring
+if(WaterMonitorEnable) {
+
+}  
+
 }
 
 void RUNNING() {
   //timestamp
  //turn motor on
+ FanMotor(true);
  //humidity/temp monitoring
  // -> idle if below water threshold
  // -> ERROR() if water is too low
@@ -83,10 +95,10 @@ void RUNNING() {
 }
 
 void DISABLED() {
-  //timestamp
+  stateReport("DISABLED");
   //turn yellow LED on
   *port_y &= 0x87;
-  WaterMonitorEnable(false);
+  WaterMonitorEnable = false;
 }
 
 //serial monitor functions
@@ -102,7 +114,7 @@ void U0init(unsigned long baud)
  *myUBRR0  = tbaud;
 }
 
-unsigned char getchar()
+unsigned char getChar()
 {
  return *myUDR0; 
 }
@@ -112,24 +124,27 @@ unsigned char available()
   return (RDA & *myUCSR0A);
 }
 
-unsigned char printchar(unsigned char data) {
+unsigned char printChar(unsigned char data) {
 while((*myUCSR0A & TBE) == 0) {};
   *myUDR0 = data;
 }
 
 void setup() {
   // put your setup code here, to run once:
+
+  //setup LEDs
   *ddr_b |= 0x80;
   *ddr_r |= 0x80;
   *ddr_y |= 0x80;
   *ddr_g |= 0x80;
-  //set the baud rate
+
+  //set the baud rate for serial monitor
   U0init(9600); 
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  if(true) IDLE(); //should be placed in IDLE when powered on;
 
 }
-
