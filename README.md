@@ -18,10 +18,16 @@ ya need to build a dang swamp cooler for this code to be of any use!
   *Changes - Added base code
 - 1.01
   *Changes - LED base code
+- 1.02
+  *Changes - Function adjustments
+- 1.03 : The Bits and Pieces Update
+  *Changes - tons of small changes, including logic, the main loop being completed, changes to state tracking, and more!
 
 
 ## Info and Credits
 Coded and designed with love, coffee, and conditionals by Bridget LaBonney - blabonney@nevada.unr.edu
-README Dated 11/14/22
+README Dated 12/8/22
+Thanks to Jacob for the emotional support <3
 
-Sources - it came to me in a dream
+Sources - UNR's CPE 301 Coursework, Labwork, and Shawn Ray
+
