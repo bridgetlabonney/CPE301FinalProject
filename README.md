@@ -37,5 +37,5 @@ Sources -
 UNR's CPE 301 Coursework, Labwork, and Shawn Ray
 https://github.com/olewolf/DHT_nonblocking for the temperature/humidity sensor and making your library user-friendly
 https://github.com/DeanIsMe/SevSeg for the Seven-Segment display code (used in a previous version, so I will still include it)
-http://www.rinkydinkelectronics.com/library.php?id=73 for the real-time clock code
+http://www.rinkydinkelectronics.com/library.php?id=73 for the real-time clock library
 https://github.com/arduino-libraries/LiquidCrystal for the LCD display code (your library is poggers)
