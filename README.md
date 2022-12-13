@@ -30,8 +30,12 @@ ya need to build a dang swamp cooler for this code to be of any use!
 Coded and designed with love, coffee, and conditionals by Bridget LaBonney - blabonney@nevada.unr.edu
 README Dated 12/13/22
 Thanks to Jacob for the emotional support <3
+All binary and no abstraction makes Jack a dull boy.
+
 
 Sources - 
 UNR's CPE 301 Coursework, Labwork, and Shawn Ray
 https://github.com/olewolf/DHT_nonblocking for the temperature/humidity sensor and making your library user-friendly
-https://github.com/DeanIsMe/SevSeg for the Seven-Segment display code 
+https://github.com/DeanIsMe/SevSeg for the Seven-Segment display code (used in a previous version, so I will still include it)
+http://www.rinkydinkelectronics.com/library.php?id=73 for the real-time clock code
+https://github.com/arduino-libraries/LiquidCrystal for the LCD display code (your library is poggers)
