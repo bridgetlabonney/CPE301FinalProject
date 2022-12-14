@@ -3,6 +3,9 @@ Swamp Cooler Project :)
 This repository was created for a project for UNR's CPE 301 course.
 > This project is designed to run a small swamp cooler built from an Arduino ATMega2560 and additional parts.
 
+## Video
+See it in it's (somewhat) working glory using this link: https://drive.google.com/file/d/1OKtAEDrmWZsiTvXDRnCMq0LNLbXCNPFB/view?usp=sharing
+
 ## Installation
 ya need to build a dang swamp cooler for this code to be of any use!
 > This can be installed on a Windows, Linux, or Mac system.
