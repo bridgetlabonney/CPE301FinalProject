@@ -4,20 +4,20 @@
 
 //TO DO
 //display
-//pin changes and proper values for LEDs & Fan
 //buttons
 //water monitoring
-//clock
 
 
 #include <dht_nonblocking.h>
 #define DHT_SENSOR_TYPE DHT_TYPE_11
-#include <SevSeg.h>
+#include <LiquidCrystal.h>
+#include <DS3231.h>
 //VARIABLES
 
-//display
-SevSeg sevseg;
+//clock
+DS3231 clock(SDA, SCL);
 
+//temp monitor
 static const int DHT_SENSOR_PIN = 2;
 DHT_nonblocking tempMonitor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 //serial port stuff
@@ -37,26 +37,27 @@ volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
 
 //water/humidity monitor & fan variables
-bool WaterMonitorEnable = true;
-bool tempMonitorEnable = true;
 bool FanMotorBool = false;
-unsigned int waterThresh = 10;
-unsigned int tempThresh = 60;
-float temperature = 60;
+unsigned int waterThresh = 5;
+unsigned int waterLevel = 0;
+float tempThresh = 23;
+float temperature = 0;
 float humidity = 0;
 
+//ports are in!
 //led
 volatile unsigned char* port_b = (unsigned char*) 0x25; 
 volatile unsigned char* ddr_b  = (unsigned char*) 0x24; 
 //button
-volatile unsigned char* port_h = (unsigned char*) 0x25; 
-volatile unsigned char* ddr_h = (unsigned char*) 0x0;
+volatile unsigned char* port_h = (unsigned char*) 0x102; 
+volatile unsigned char* ddr_h = (unsigned char*) 0x101;
 //button pins
-volatile unsigned char* pin_start = 0;
-volatile unsigned char* pin_reset = 0;
+volatile unsigned char* pin_h = (unsigned char*) 0x100;
+int buttonStart = 0;
+int buttonReset = 0;
 //fan
-volatile unsigned char* port_e = (unsigned char*) 0x25; 
-volatile unsigned char* ddr_e = (unsigned char*) 0x0;
+volatile unsigned char* port_e = (unsigned char*) 0x2E; 
+volatile unsigned char* ddr_e = (unsigned char*) 0x2D;
 
 
 //for operating the loop 
@@ -70,10 +71,12 @@ volatile unsigned char *myTIMSK1 = (unsigned char *) 0x6F;
 volatile unsigned int *myTCNT1 = (unsigned int *) 0x84;
 volatile unsigned char *myTIFR1 = (unsigned char *) 0x36;
 
+//display
+LiquidCrystal lcd(22, 23, 24, 25, 26, 27);
+
 void ClockReport() {
 //This gets the current real time and reports it to the Serial monitor
-int currentTime = 0;
-printChar(currentTime);
+printChar(clock.getTimeStr());
 }
 
 //ADC
@@ -123,23 +126,19 @@ void IDLE() {
   //turn all LED's off except for green
   stateReport(0);
   //turn on greenLED
-  *port_b &= 0b0010000;
-  *port_b |= 0b0010000;
-    FanMotor(false);
-  
-  
+  *port_b &= 0x0;
+  *port_b |= 0b00010000;
+  FanMotor(false);
 }
 
 void ERROR() {
-  //timestamp
   stateReport(3);
   //turn motor off
   FanMotor(false);
-  //reset button -> idle
-  //if(button pressed) { IDLE(); }
-  //stop button -> disabled
   //red led on, turn all others off
-  *port_b |= 0x40;
+  *port_b &= 0x0;
+  *port_b |= 0b10000000;
+  
 }
 
 void RUNNING() {
@@ -148,22 +147,24 @@ void RUNNING() {
  //turn motor on
  FanMotor(true);
 //blue LED on, turn all others off
-*port_b &= 0x40;
+*port_b &= 0x0;
+*port_b |= 0b01000000;
+
 }
 
 void DISABLED() {
   stateReport(1);
   //turn yellow LED on
-  *port_b &= 0b01000000; 
-  WaterMonitorEnable = false;
-  tempMonitorEnable = false;
+  *port_b &= 0b00000000;
+  *port_b |= 0b00100000;
 }
 
 void FanMotor(bool on) {
   //check if the fan motor is on or off already
   if(FanMotorBool) { 
     if(!on) {//we want it off and its on, turn it off
-
+    printChar("MOTOR OFF");
+    *port_e |= 0b11110111;
     ClockReport();
     }
     //otherwise do nothing
@@ -171,10 +172,13 @@ void FanMotor(bool on) {
   else {
     if(on) {
       //turn it on!
+      *port_e &= 0b11111111;
+      printChar("MOTOR ON");
       ClockReport();
     }
     //otherwise, we want it off and it's off, do nothing 
   }
+  FanMotorBool = on;
 }
 
 void stateReport(int x){
@@ -197,26 +201,27 @@ void stateReport(int x){
     default: //big miss steak
       s = "NULL";
   }
-  printChar(s);
   
 }
 
 //temp/humidity monitoring
-int getTemp() {
- return 0;
-}
-
-int getWaterLevel() {
-  return 0;
-}
-
 void THMR() {
 //the temperature and humidity monitoring routine
 if(read_thmonitor(&temperature, &humidity) == true) {
 //display temp/humidity
+lcd.setCursor(0,0);
+lcd.print("TEMP: ");
+lcd.print(temperature);
+lcd.print(" C");
+lcd.setCursor(0,1);
+lcd.print("HUMIDITY: ");
+lcd.print(humidity);
+
 }
 else {
   //display error
+  lcd.setCursor(0,0);
+  //lcd.print("big miss steak");
 }
 
 }
@@ -225,17 +230,20 @@ static bool read_thmonitor(float *temperature, float *humidity)
 {
   static unsigned long timestamp = millis( );
 
-  if(millis( ) - timestamp > 1000ul)
+  if(millis() - timestamp > 1000ul)
   {
     if(tempMonitor.measure(temperature, humidity) == true)
     {
-      timestamp = millis( );
+      timestamp = millis();
       return true;
     }
   }
 
   return false;
 }
+
+//water monitor
+
 
 //serial monitor functions
 
@@ -276,10 +284,12 @@ void setup() {
   //setup LED, button, and fan pins
   *ddr_b |= 0b11111111; //led
   *ddr_e |= 0b00011010; //fan pins
+  *port_e &= 0x0;
+  *port_e |= 0b00010000;
+  *ddr_h &= 0b11111111; //buttons 
   //buttons
-  *pin_start &= 0x4;
-  *pin_reset &= 0x4;
-
+  *pin_h &= 0b00110000;
+  
   //set the baud rate for serial monitor
   U0init(9600); 
 
@@ -288,37 +298,40 @@ void setup() {
 
   
   //setup display
+  lcd.begin(16, 2);
 
-  byte NumberOfDisplays = 4;
-  byte NumberOfSharedCommon[] = {44, 46, 48, 50}; // for if you want to config the common pins for multiple displays
-  
-  // A B C D E F G DP IN ORDER
-  byte segmentPins[] = {22,24,26,28,30,32,34};
-  bool resistorsOnSegments = true; // is the resistor on the 
-  bool disableDecPoint = true; // Use 'true' if your decimal point doesn't exist or isn't connected. Then, you only need to specify 7 segmentPins[]
-  bool updateWithDelays = false; // Default 'false' is Recommended
-  bool leadingZeros = false; // Use 'true' if you'd like to keep the leading zeros
-  //sevseg.setSegments();
+  //clock
+  clock.begin();
+  clock.setTime(12, 0, 0);
 
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if(state == NULL) IDLE(); //should be placed in IDLE when powered on
+  buttonStart = (*pin_h & 0b00100000);
+  buttonReset = (*pin_h & 0b00010000);
+  if(state == NULL) IDLE();//should be placed in IDLE when powered on
   //temp too high? time to cool it down
+
   if(temperature > tempThresh) {
     RUNNING();
+    //lcd.print("RUNNING");
   }
-  else IDLE(); //temp is at our desired temp, turn it to idle
-  if(true) { //start/stop button pressed
+  if(temperature <= tempThresh) IDLE(); //temp is at our desired temp, turn it to idle
+  if(buttonStart != 0) { //start/stop button pressed
   if(state == 2) DISABLED(); 
   else RUNNING();
   }
-  if(true) IDLE(); //reset button pressed
-  if(getWaterLevel() >= waterThresh) IDLE();
+  if(buttonReset != 0) {
+    //*port_b &= 0x0;
+    IDLE(); 
+  }//reset button pressed
+  if(waterLevel >= waterThresh && state != 2) IDLE();
+  else ERROR();
   if(state != 1) {
     THMR();
   } 
-  else ERROR();
-
+  
+  
 }
+
