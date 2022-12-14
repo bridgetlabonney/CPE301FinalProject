@@ -24,6 +24,8 @@ ya need to build a dang swamp cooler for this code to be of any use!
   *Changes - tons of small changes, including logic, the main loop being completed, changes to state tracking, and more!
 - 1.04 : Couldn't Succeed At What I'm Doing Update
   *Changes - Literally everything dog read the changes in the description of the code commit
+-1.05: Final Update
+ *Changes - fixed display code, small fixes, logic loop, other things
 
 
 ## Info and Credits
